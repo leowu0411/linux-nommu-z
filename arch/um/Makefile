@@ -48,6 +48,7 @@ KBUILD_CPPFLAGS += -I$(srctree)/$(HOST_DIR)/um
 
 ifneq ($(CONFIG_MMU),y)
 core-y += $(ARCH_DIR)/nommu/
+KBUILD_CPPFLAGS += -I$(srctree)/$(HOST_DIR)/um/nommu
 endif
 
 # -Dvmap=kernel_vmap prevents anything from referencing the libpcap.o symbol so

@@ -19,15 +19,31 @@ int __vdso_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz);
 __kernel_old_time_t __vdso_time(__kernel_old_time_t *t);
 long __vdso_getcpu(unsigned int *cpu, unsigned int *node, struct getcpu_cache *unused);
 
+/* XXX: FIXME, always trap SIGSYS on nommu, cannot use zpoline path as
+ * we don't know how to retrieve um_zpoline_enabled from vdso object ???
+ */
+#define __VDSO_SYSCALL1(sysnr, ret, a0) {		\
+		do {					\
+			asm("syscall"			\
+			    : "=a" (ret)		\
+			    : "0" (sysnr), "D" (a0)	\
+			    : "rcx", "r11", "memory");	\
+		} while (0);				\
+	}
+#define __VDSO_SYSCALL2(sysnr, ret, a0, a1) {			\
+		do {						\
+			asm("syscall"				\
+			    : "=a" (ret)			\
+			    : "0" (sysnr), "D" (a0), "S" (a1)	\
+			    : "rcx", "r11", "memory");		\
+		} while (0);					\
+	}
+
 int __vdso_clock_gettime(clockid_t clock, struct __kernel_old_timespec *ts)
 {
 	long ret;
 
-	asm("syscall"
-		: "=a" (ret)
-		: "0" (__NR_clock_gettime), "D" (clock), "S" (ts)
-		: "rcx", "r11", "memory");
-
+	__VDSO_SYSCALL2(__NR_clock_gettime, ret, clock, ts);
 	return ret;
 }
 int clock_gettime(clockid_t, struct __kernel_old_timespec *)
@@ -37,11 +53,7 @@ int __vdso_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz)
 {
 	long ret;
 
-	asm("syscall"
-		: "=a" (ret)
-		: "0" (__NR_gettimeofday), "D" (tv), "S" (tz)
-		: "rcx", "r11", "memory");
-
+	__VDSO_SYSCALL2(__NR_gettimeofday, ret, tv, tz);
 	return ret;
 }
 int gettimeofday(struct __kernel_old_timeval *, struct timezone *)
@@ -51,10 +63,7 @@ __kernel_old_time_t __vdso_time(__kernel_old_time_t *t)
 {
 	long secs;
 
-	asm volatile("syscall"
-		: "=a" (secs)
-		: "0" (__NR_time), "D" (t) : "cc", "r11", "cx", "memory");
-
+	__VDSO_SYSCALL1(__NR_time, secs, t);
 	return secs;
 }
 __kernel_old_time_t time(__kernel_old_time_t *t) __attribute__((weak, alias("__vdso_time")));

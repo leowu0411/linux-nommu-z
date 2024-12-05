@@ -128,26 +128,26 @@ lmbench and (self-crafted) getpid benchmark (with v6.15-rc0 uml/next
 tree).
 
 .. csv-table:: lmbench (usec)
-  :header: ,native,um,um-mmu(s),um-nommu(s)
+  :header: ,native,um,um-mmu(s),um-nommu(s),um-nommu(z)
 
-  select-10    ,0.5224,28.3882,27.2839,3.0046
-  select-100   ,1.5641,30.3775,28.8091,3.8546
-  select-1000  ,11.6922,38.2021,32.5367,12.2568
-  syscall      ,0.1635,27.8278,24.8049,2.6957
-  read         ,0.3063,29.0073,23.5953,2.8127
-  write        ,0.2531,29.6342,26.3339,2.7932
-  stat         ,1.8827,41.2546,34.6495,3.3199
-  open/close   ,3.2548,67.5806,62.4781,6.4189
-  fork+sh      ,1108.8000,5618.0000,3604.6667,456.0476
-  fork+execve  ,519.1579,2242.8000,1425.7500,138.1316
+  select-10    ,0.5224,28.3882,27.2839,3.0046,0.3925
+  select-100   ,1.5641,30.3775,28.8091,3.8546,1.2375
+  select-1000  ,11.6922,38.2021,32.5367,12.2568,9.5989
+  syscall      ,0.1635,27.8278,24.8049,2.6957,0.1921
+  read         ,0.3063,29.0073,23.5953,2.8127,0.2461
+  write        ,0.2531,29.6342,26.3339,2.7932,0.2422
+  stat         ,1.8827,41.2546,34.6495,3.3199,0.5612
+  open/close   ,3.2548,67.5806,62.4781,6.4189,0.9935
+  fork+sh      ,1108.8000,5618.0000,3604.6667,456.0476,19048.0000
+  fork+execve  ,519.1579,2242.8000,1425.7500,138.1316,4937.3333
 
 .. csv-table:: do_getpid bench (nsec)
-  :header: ,native,um,um-mmu(s),um-nommu(s)
+  :header: ,native,um,um-mmu(s),um-nommu(s),um-nommu(z)
 
-  getpid , 162 , 27049 , 24444 , 2696
+  getpid , 162 , 27049 , 24444 , 2696, 201
 
 (um-nommu(s) is with seccomp syscall hook, um-mmu(s) is SECCOMP mode,
-respectively)
+um-nommu(z) is nommu with zpoline syscall hook, respectively)
 
 Limitations
 ===========
