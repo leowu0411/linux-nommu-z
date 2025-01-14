@@ -6,6 +6,11 @@
 #include <stub-data.h>
 
 /*
+ * process.c
+ */
+extern int userspace_pid[];
+
+/*
  * elf_aux.c
  */
 void scan_elf_aux(char **envp);
