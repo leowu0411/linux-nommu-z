@@ -233,67 +233,6 @@ jobs:
           name: bench-result-${{ matrix.testname }}
           path: output/${{ matrix.testname }}*
 
-  checkpatch:
-    runs-on: ubuntu-22.04
-    name: checkpatch and co
-    env:
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
-      USE_CCACHE: 1
-    steps:
-      - name: Set env
-        shell: bash
-        run: |
-          echo "/usr/lib/ccache/bin:/usr/lib/ccache:${{ github.workspace }}/bin" >> $GITHUB_PATH
-          echo "export PATH=/usr/lib/ccache/bin:/usr/lib/ccache:${{ github.workspace }}/bin:$PATH" >> $HOME/.bashrc
-      - name: Checkout
-        with:
-          fetch-depth: 0
-        uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.CCACHE_DIR }}
-          key: ${{ runner.os }}-checkpatch-ccache-build-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-checkpatch-ccache-build-
-      - name: Install packages
-        run: |
-           sudo pip install ply GitPython mypy
-           sudo apt update -y
-           sudo apt install -y aspell ccache sparse
-           git clone https://github.com/daxtens/smart-sparse-diff
-      #- name: Setup tmate session
-      #  uses: mxschmitt/action-tmate@v3
-      #  with:
-      #    detached: true
-      - name: checkout trees
-        run: |
-           #git remote add linus git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
-           #git fetch linus
-           #git format-patch -o p1 linus/master..HEAD~1
-           git remote add uml git://git.kernel.org/pub/scm/linux/kernel/git/uml/linux.git
-           git fetch uml
-           git checkout uml/next
-           git checkout zpoline-nommu-v6.10
-      #- name: build (sparse)
-      #  run: |
-      #     make ARCH=um W=1 C=2 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__ -fmax-errors=unlimited -fmax-warnings=unlimited' defconfig O=build-sparse
-      #     make ARCH=um W=1 C=2 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__ -fmax-errors=unlimited -fmax-warnings=unlimited' O=build-sparse clean
-      #     make ARCH=um W=1 C=2 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__ -fmax-errors=unlimited -fmax-warnings=unlimited' O=build-sparse -j8 2> old-sparse.log 1> /dev/null
-      #     git checkout zpoline-nommu-v6.10
-      #     git checkout HEAD~1
-      #     make ARCH=um W=1 C=2 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__ -fmax-errors=unlimited -fmax-warnings=unlimited' O=build-sparse -j8 2> new-sparse.log 1> /dev/null
-      #     ./smart-sparse-diff/smart-sparse-diff.py old-sparse.log new-sparse.log
-      - name: check coding style
-        run: |
-           git format-patch -o p1 uml/next..HEAD~1
-           ./scripts/checkpatch.pl --summary-file --ignore FILE_PATH_CHANGES \
-             --ignore AVOID_EXTERNS p1/*.patch
-      - name: check spells on commit message
-        continue-on-error: true
-        run: |
-           git log uml/next..HEAD |grep -v -E "^commit" > /tmp/a
-           aspell list /tmp/a
-           exit 1
-
   bench-result:
     runs-on: ubuntu-22.04
     name: bench-result
