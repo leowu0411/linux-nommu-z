@@ -276,33 +276,42 @@ jobs:
         with:
           name: bench-result-all
           path: output/out/*
-      - name: publish to imgur
-        uses: devicons/public-upload-to-imgur@v2.2.2
-        id: lmbench-imgur
+      - name: create release and upload images
+        uses: ncipollo/release-action@v1
         with:
-          path: "output/out/lmbench.png"
-          client_id: ${{secrets.IMGUR_CLIENT_ID}}
-      - name: publish to imgur-iperf
-        uses: devicons/public-upload-to-imgur@v2.2.2
-        id: iperf3-imgur
+          tag: "bench-${{ github.run_id }}"
+          name: "Bench results – run ${{ github.run_id }}"
+          allowUpdates: true
+          commit: ${{ github.sha }}
+          artifacts: |
+            output/out/lmbench.png
+            output/out/iperf3.png
+            output/out/tcp-stream.png
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: collect asset urls
+        id: asset-urls
+        uses: actions/github-script@v7
         with:
-          path: "output/out/iperf3.png"
-          client_id: ${{secrets.IMGUR_CLIENT_ID}}
-      - name: publish to imgur-netperf
-        uses: devicons/public-upload-to-imgur@v2.2.2
-        id: netperf-imgur
-        with:
-          path: "output/out/tcp-stream.png"
-          client_id: ${{secrets.IMGUR_CLIENT_ID}}
+          script: |
+            const tag = `bench-${{ github.run_id }}`
+            const release = await github.rest.repos.getReleaseByTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag
+            })
+            const md = release.data.assets.map(a => `![${a.name}](${a.browser_download_url})`)
+            core.setOutput('markdown_urls', JSON.stringify(md))
       - name: prepare action post
+        shell: bash
         run: |
-          export SCRIPT_OUTPUT="${{ join(fromJSON(steps.lmbench-imgur.outputs.markdown_urls)) }} ${{ join(fromJSON(steps.iperf3-imgur.outputs.markdown_urls)) }} ${{ join(fromJSON(steps.netperf-imgur.outputs.markdown_urls)) }}"
-          echo "SCRIPT_OUTPUT<<EOF" >> $GITHUB_ENV
-          echo "$TMP_OUTPUT" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "$SCRIPT_OUTPUT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          echo ${{env.SCRIPT_OUTPUT}}
+          IMAGES=$(printf '%b' "${{ join(fromJSON(steps.asset-urls.outputs.markdown_urls), '\n') }}")
+          printf -v SCRIPT_OUTPUT '%s\n\n%s\n' "$TMP_OUTPUT" "$IMAGES"
+          {
+            echo 'SCRIPT_OUTPUT<<EOF'
+            echo "$SCRIPT_OUTPUT"
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
+          echo "$SCRIPT_OUTPUT"
       - uses: actions/github-script@v7
         env:
           COMMENT_BODY: ${{env.SCRIPT_OUTPUT}}
