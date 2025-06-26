@@ -119,10 +119,10 @@ jobs:
           build-args: "MODE=${{ matrix.testname }}"
           push: false
           tags: |
-            ghcr.io/jserv/alpine:3.20.6-${{ matrix.testname }}
+            ghcr.io/${{ github.actor }}/alpine:3.20.6-${{ matrix.testname }}
       - name: image for test
         run: |
-          docker create --name alpine-nommu ghcr.io/jserv/alpine:3.20.6-${{ matrix.testname }}
+          docker create --name alpine-nommu ghcr.io/${{ github.actor }}/alpine:3.20.6-${{ matrix.testname }}
           docker start alpine-nommu
           docker wait alpine-nommu
           docker logs alpine-nommu
@@ -227,7 +227,7 @@ jobs:
           build-args: "MODE=${{ matrix.testname }}"
           push: true
           tags: |
-            ghcr.io/jserv/alpine:3.20.6-${{ matrix.testname }}
+            ghcr.io/${{ github.actor }}/alpine:3.20.6-${{ matrix.testname }}
       - uses: actions/upload-artifact@v4
         with:
           name: bench-result-${{ matrix.testname }}
